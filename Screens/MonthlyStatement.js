@@ -150,6 +150,7 @@ class MonthlyStatement extends React.Component {
             scrollViewProps={{
               nestedScrollEnabled: true,
             }}
+            placeholder="Select a month"
           />
         </View>
         <View

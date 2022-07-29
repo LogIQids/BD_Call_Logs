@@ -693,11 +693,11 @@ class HomeScreen extends React.Component {
   navigateToScreen = id => {
     switch (id) {
       case 1:
-        return money;
+        return this.props.navigation && this.props.navigation.navigate('send_request');
       case 2:
         return this.props.navigation && this.props.navigation.navigate('monthly_statement')
       case 3:
-        return history;
+        return this.props.navigation && this.props.navigation.navigate('transaction_history');
       case 4:
         return amount;
       case 5:
@@ -1376,12 +1376,7 @@ class HomeScreen extends React.Component {
                   {a.mode}
                 </Text>
               </View>
-            ))}
-          <View style={[styles.buttonContainer, {alignSelf: 'center'}]}>
-            <TouchableOpacity onPress={() => this.props.handleLogout()}>
-              <Text style={{color: '#fff', textAlign: 'center'}}>Signout</Text>
-            </TouchableOpacity>
-          </View> */}
+            ))}*/}
         </ScrollView>
       </View>
     );
