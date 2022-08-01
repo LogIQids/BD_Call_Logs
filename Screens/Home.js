@@ -699,7 +699,7 @@ class HomeScreen extends React.Component {
       case 3:
         return this.props.navigation && this.props.navigation.navigate('transaction_history');
       case 4:
-        return amount;
+        return this.props.navigation && this.props.navigation.navigate('transaction_amount');
       case 5:
         return average;
       case 6:

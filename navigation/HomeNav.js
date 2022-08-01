@@ -6,6 +6,7 @@ import MonthlyStatement from '../Screens/MonthlyStatement';
 import BestUsers from '../Screens/BestUsers';
 import TransactionHistory from '../Screens/TransactionHistory';
 import SendRequest from '../Screens/SendRequest';
+import TransactionAmount from '../Screens/TransactionAmount';
 
 const Stack = createStackNavigator();
 
@@ -35,6 +36,11 @@ export default function StackNavigator() {
         <Stack.Screen
         name="send_request"
         component={SendRequest}
+        options={{headerShown: false}}
+      />
+       <Stack.Screen
+        name="transaction_amount"
+        component={TransactionAmount}
         options={{headerShown: false}}
       />
     </Stack.Navigator>
