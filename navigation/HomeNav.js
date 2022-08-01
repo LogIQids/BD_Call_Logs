@@ -7,6 +7,7 @@ import BestUsers from '../Screens/BestUsers';
 import TransactionHistory from '../Screens/TransactionHistory';
 import SendRequest from '../Screens/SendRequest';
 import TransactionAmount from '../Screens/TransactionAmount';
+import TransactionAmountMax from '../Screens/TransactionAmountMax';
 
 const Stack = createStackNavigator();
 
@@ -41,6 +42,11 @@ export default function StackNavigator() {
        <Stack.Screen
         name="transaction_amount"
         component={TransactionAmount}
+        options={{headerShown: false}}
+      />
+       <Stack.Screen
+        name="transaction_amount_max"
+        component={TransactionAmountMax}
         options={{headerShown: false}}
       />
     </Stack.Navigator>

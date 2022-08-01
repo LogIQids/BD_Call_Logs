@@ -577,12 +577,12 @@ class HomeScreen extends React.Component {
       .then(response => {
         this.setState({fetchRequestLoader: false});
         console.log('response request', response.data);
-        if (response.data && response.data.length == 0) {
-          ToastAndroid.show('No requests found', ToastAndroid.SHORT);
-        } else {
-          this.setState({requestsData: response.data});
-          ToastAndroid.show('Requests Fetched', ToastAndroid.SHORT);
-        }
+        // if (response.data && response.data.length == 0) {
+        //   ToastAndroid.show('No requests found', ToastAndroid.SHORT);
+        // } else {
+        //   this.setState({requestsData: response.data});
+        //   ToastAndroid.show('Requests Fetched', ToastAndroid.SHORT);
+        // }
       })
       .catch(e => {
         if (typeof e.response.data == 'string') {
@@ -701,7 +701,7 @@ class HomeScreen extends React.Component {
       case 4:
         return this.props.navigation && this.props.navigation.navigate('transaction_amount');
       case 5:
-        return average;
+        return this.props.navigation && this.props.navigation.navigate('transaction_amount_max');
       case 6:
         return this.props.navigation && this.props.navigation.navigate('best_users');
       default:
