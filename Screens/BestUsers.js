@@ -52,6 +52,8 @@ class BestUsers extends React.Component {
         {label: 'December', value: '12'},
       ],
       selectedMonth: null,
+      globalLoader: true,
+
     };
   }
   componentDidMount() {
@@ -66,6 +68,7 @@ class BestUsers extends React.Component {
         console.log('response statement', response.data);
         this.setState({
           bestUsers: response.data,
+          globalLoader:false
         });
       })
       .catch(e => console.log('op', e));
@@ -74,8 +77,18 @@ class BestUsers extends React.Component {
   render() {
     console.log('this.state', this.state.bestUsers);
 
-    return (
-      <View style={styles.container}>
+    return this.state.globalLoader ?(
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          paddingHorizontal: 15,
+          backgroundColor: '#343244',
+        }}>
+         <ActivityIndicator color={'silver'} size="large" />
+        </View>
+     ) : (<View style={styles.container}>
         <View
           style={{
             flexDirection: 'row',
@@ -142,8 +155,8 @@ class BestUsers extends React.Component {
               );
             })}
         </View>
-      </View>
-    );
+      </View>)
+    
   }
 }
 function mapStateToProps(state) {

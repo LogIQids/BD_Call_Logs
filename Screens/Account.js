@@ -48,6 +48,7 @@ class Account extends React.Component {
         {label: 'Time/Date', value: 'Time'},
       ],
       selectedMonth: null,
+      globalLoader: true,
     };
   }
   componentDidMount() {
@@ -76,6 +77,7 @@ class Account extends React.Component {
           name: response.data && response.data.name,
           phone: response.data && response.data.phone,
           balance: response.data && response.data.balance,
+          globalLoader: false,
         });
       })
       .catch(e => console.log('op', e));
@@ -208,8 +210,18 @@ class Account extends React.Component {
     );
   };
   render() {
-
-    return (
+    return this.state.globalLoader ? (
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          paddingHorizontal: 15,
+          backgroundColor: '#343244',
+        }}>
+         <ActivityIndicator color={'silver'} size="large" />
+        </View>
+    ) : (
       <View style={styles.container}>
         {this.renderModal()}
         <Icon2
@@ -218,7 +230,7 @@ class Account extends React.Component {
           size={25}
           style={{position: 'absolute', top: 20, right: 20}}
           onPress={() => {
-            this.setState({logoutModal:true})
+            this.setState({logoutModal: true});
           }}
         />
         <View

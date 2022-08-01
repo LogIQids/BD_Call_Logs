@@ -18,9 +18,10 @@ export default function TabNavigator() {
         options={{
           headerShown: false,
           tabBarLabel: 'Home',
-          tabBarLabelStyle: {fontsize: 18, color: '#0D0D0D'},
+          activeTintColor: '#2a52be',
+          inactiveTintColor: '#b5b5b5',
           tabBarIcon: ({focused, tintColor}) => {
-            return <Icon name="home" style={{padding: 0}} size={25} />;
+            return <Icon name="home" style={{padding: 0}} size={25} color={focused?'#2a52be':null}/>;
           },
         }}
       />
@@ -30,9 +31,10 @@ export default function TabNavigator() {
         options={{
           headerShown: false,
           tabBarLabel: 'Profile',
-          tabBarLabelStyle: {fontsize: 18, color: '#0D0D0D'},
+          activeTintColor: '#2a52be',
+          inactiveTintColor: '#b5b5b5',
           tabBarIcon: ({focused, tintColor}) => {
-            return <Icon2 name="account" style={{padding: 0}} size={25} />;
+            return <Icon2 name="account" style={{padding: 0}} size={25} color={focused?'#2a52be':null}/>;
           },
         }}
       />
