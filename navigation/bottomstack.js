@@ -21,7 +21,7 @@ export default function TabNavigator() {
           activeTintColor: '#2a52be',
           inactiveTintColor: '#b5b5b5',
           tabBarIcon: ({focused, tintColor}) => {
-            return <Icon name="home" style={{padding: 0}} size={25} color={focused?'#2a52be':null}/>;
+            return <Icon name="home" style={{padding: 0}} size={25} color={focused?'#2a52be':'#b5b5b5'}/>;
           },
         }}
       />
@@ -34,7 +34,7 @@ export default function TabNavigator() {
           activeTintColor: '#2a52be',
           inactiveTintColor: '#b5b5b5',
           tabBarIcon: ({focused, tintColor}) => {
-            return <Icon2 name="account" style={{padding: 0}} size={25} color={focused?'#2a52be':null}/>;
+            return <Icon2 name="account" style={{padding: 0}} size={25} color={focused?'#2a52be':'#b5b5b5'}/>;
           },
         }}
       />
