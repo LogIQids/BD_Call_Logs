@@ -169,39 +169,44 @@ class Account extends React.Component {
             Logout
           </Text>
           <Text style={[{marginBottom: 15}]}>
-            {'Are you sure you want\n'}
-            {'to logout ?'}
+            Are you sure you want to logout ?
           </Text>
 
           <View style={{flexDirection: 'row'}}>
-            <View>
+            <View
+              style={{
+                backgroundColor: '#2F2C3D',
+                color: '#fff',
+                padding: 10,
+                margin: 8,
+                borderRadius: 5,
+                width: '45%',
+                borderWidth: 0.5,
+                borderColor: '#FFF',
+              }}>
               <TouchableOpacity
                 onPress={() => {
-                  this.updateDetails();
+                  this.props.handlelogin(null);
                 }}>
-                {this.state.loader ? (
-                  <ActivityIndicator color={'silver'} size="small" />
-                ) : (
-                  <Text
-                    style={{color: '#fff', textAlign: 'center', fontSize: 16}}>
-                    Update
-                  </Text>
-                )}
+                <Text style={{color: '#fff', textAlign: 'center'}}>Yes</Text>
               </TouchableOpacity>
             </View>
-            <View>
+            <View
+              style={{
+                backgroundColor: '#fff',
+                color: '#fff',
+                padding: 10,
+                margin: 8,
+                borderRadius: 5,
+                width: '45%',
+                borderWidth: 0.5,
+                borderColor: '#2F2C3D',
+              }}>
               <TouchableOpacity
                 onPress={() => {
-                  this.updateDetails();
+                  this.setState({logoutModal: false});
                 }}>
-                {this.state.loader ? (
-                  <ActivityIndicator color={'silver'} size="small" />
-                ) : (
-                  <Text
-                    style={{color: '#fff', textAlign: 'center', fontSize: 16}}>
-                    Update
-                  </Text>
-                )}
+                <Text style={{color: '#2F2C3D', textAlign: 'center'}}>No</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -219,8 +224,8 @@ class Account extends React.Component {
           paddingHorizontal: 15,
           backgroundColor: '#343244',
         }}>
-         <ActivityIndicator color={'silver'} size="large" />
-        </View>
+        <ActivityIndicator color={'silver'} size="large" />
+      </View>
     ) : (
       <View style={styles.container}>
         {this.renderModal()}

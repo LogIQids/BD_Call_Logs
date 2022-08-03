@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   ScrollView,
   Image,
+  Keyboard
 } from 'react-native';
 import React, {Component} from 'react';
 import DropDownPicker from 'react-native-dropdown-picker';
@@ -155,6 +156,8 @@ class TransactionHistory extends React.Component {
     } else if (this.state.valueSearch == 'type') {
      params = `?type=${this.state.valueTransaction}`;
     }
+    Keyboard.dismiss();
+
     axios
       .post(
         `https://harshal-trasactions-project.herokuapp.com/user/${userId}/transactions${params}`,
@@ -226,26 +229,26 @@ class TransactionHistory extends React.Component {
               scrollViewProps={{
                 nestedScrollEnabled: true,
               }}
-              style={{
-                backgroundColor: '#343244',
-                borderBottomColor: '#fff',
-                borderWidth: 0,
-                borderBottomWidth: 1,
-              }}
-              placeholderStyle={{
-                color: '#fff',
-              }}
-              textStyle={{
-                color: '#fff',
-              }}
-              listItemLabelStyle={{
-                color: '#000',
-              }}
-              arrowIconStyle={{
-                width: 20,
-                height: 20,
-                tintColor: '#fff',
-              }}
+              // style={{
+              //   backgroundColor: '#343244',
+              //   borderBottomColor: '#fff',
+              //   borderWidth: 0,
+              //   borderBottomWidth: 1,
+              // }}
+              // placeholderStyle={{
+              //   color: '#fff',
+              // }}
+              // textStyle={{
+              //   color: '#fff',
+              // }}
+              // listItemLabelStyle={{
+              //   color: '#000',
+              // }}
+              // arrowIconStyle={{
+              //   width: 20,
+              //   height: 20,
+              //   tintColor: '#fff',
+              // }}
               placeholder="Select Transaction Mode"
             />
           </View>

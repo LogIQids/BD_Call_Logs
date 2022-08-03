@@ -17,7 +17,7 @@ import moment from 'moment';
 import Modal from 'react-native-modal';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import Icon from 'react-native-vector-icons/AntDesign';
-import Icon2 from 'react-native-vector-icons/MaterialCommunityIcons';
+import Icon2 from 'react-native-vector-icons/FontAwesome';
 import Icon4 from 'react-native-vector-icons/Ionicons';
 
 import {connect} from 'react-redux';
@@ -25,7 +25,7 @@ import * as actions from '../actions';
 
 const screenHeight = Dimensions.get('window').height;
 const screenWidth = Dimensions.get('window').width;
-const contact = require('../assets/contact.png');
+const contact = require('../assets/phone-message.png');
 
 class SendRequest extends React.Component {
   constructor(props) {
@@ -95,7 +95,9 @@ class SendRequest extends React.Component {
         {
           amount: Number(this.state.amount),
           transactionMode: this.state.valueTransaction,
-          receiverIdentifier: this.state.valueIdentifier,
+          receiverIdentifier: this.state.email_phone.includes('@')
+            ? 'email'
+            : 'phone',
           receiver: this.state.email_phone,
           comments: this.state.comment,
         },
@@ -109,10 +111,11 @@ class SendRequest extends React.Component {
       .then(response => {
         this.setState({sendMoneyLoader: false});
         console.log('response request', response.data);
+        this.setState({sendModal:false})
         if (typeof response.data == 'string') {
           ToastAndroid.show(response.data, ToastAndroid.SHORT);
         } else {
-          ToastAndroid.show('Money Requested', ToastAndroid.SHORT);
+          ToastAndroid.show('Money Sent', ToastAndroid.SHORT);
         }
       })
       .catch(e => {
@@ -162,7 +165,6 @@ class SendRequest extends React.Component {
       });
   };
   renderRequestModal = () => {
-  
     return (
       <Modal
         animationInTiming={800}
@@ -171,20 +173,20 @@ class SendRequest extends React.Component {
         backdropTransitionOutTiming={400}
         animationIn={'slideInUp'}
         animationOut={'slideOutDown'}
-        isVisible={this.state.showRequest}
+        isVisible={this.state.requestModal}
         style={{
           width: '100%',
-          justifyContent: 'flex-end',
-          margin: 0,
+
           flexDirection: 'column',
-          zIndex: 1,
+          justifyContent: 'center',
+          margin: 0,
         }}
         onBackButtonPress={() => {
-          this.setState({showRequest: false});
+          this.setState({requestModal: false});
         }}
         statusBarTranslucent={true}
         onBackdropPress={() => {
-          this.setState({showRequest: false});
+          this.setState({requestModal: false});
         }}
         useNativeDriver={true}
         hideModalContentWhileAnimating={true}>
@@ -196,7 +198,82 @@ class SendRequest extends React.Component {
             borderTopLeftRadius: 8,
             borderTopRightRadius: 8,
           }}>
+          <Text style={{color: '#2F2C3D', fontSize: 16, fontWeight: '600'}}>
+            Requesting {this.state.email_phone}
+          </Text>
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              width: '90%',
+              alignItems: 'center',
+              borderWidth: 0.5,
+              borderColor: '#0d0d0d',
+              marginBottom: 20,
+              borderRadius: 8,
+              marginVertical: 10,
+              alignSelf: 'center',
+            }}>
+            <Icon2
+              name="rupee"
+              color={'#2F2C3D'}
+              size={16}
+              style={{marginLeft: 8}}
+            />
+            <TextInput
+              placeholder="Enter amount"
+              style={{
+                flex: 0.98,
+                justifyContent: 'center',
+                alignItems: 'center',
+                color: '#2F2C3D',
+                paddingLeft: 4,
+              }}
+              onChangeText={text => this.handleOnchange('amount', text)}
+              placeholderTextColor="#2F2C3D"
+              value={this.state.amount}
+            />
           </View>
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              width: '90%',
+              alignItems: 'center',
+              borderWidth: 0.5,
+              borderColor: '#0d0d0d',
+              marginBottom: 20,
+              borderRadius: 8,
+              marginBottom: 10,
+              alignSelf: 'center',
+            }}>
+            <TextInput
+              placeholder="Add Comment"
+              style={{
+                flex: 0.98,
+                justifyContent: 'center',
+                alignItems: 'center',
+                color: '#2F2C3D',
+                paddingLeft: 20,
+              }}
+              onChangeText={text => this.handleOnchange('comment', text)}
+              placeholderTextColor="#2F2C3D"
+              value={this.state.comment}
+            />
+          </View>
+          <View style={[styles.buttonContainer, {alignSelf: 'center'}]}>
+            <TouchableOpacity
+              onPress={() => {
+                this.sendMoney();
+              }}>
+              {this.state.requestMoneyLoader ? (
+                <ActivityIndicator color={'silver'} size="small" />
+              ) : (
+                <Text style={{color: '#fff', textAlign: 'center'}}>Request</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
       </Modal>
     );
   };
@@ -230,6 +307,7 @@ class SendRequest extends React.Component {
         } else {
           ToastAndroid.show('Money Requested', ToastAndroid.SHORT);
         }
+        this.setState({requestModal:false})
       })
       .catch(e => {
         if (typeof e.response.data == 'string') {
@@ -342,101 +420,8 @@ class SendRequest extends React.Component {
       });
     }
   };
-  searchTransaction = () => {
-    this.setState({searchLoader: true});
-    let params = '';
-    console.log('searchValue', this.state.valueTransaction);
-    if (this.state.valueSearch == 'email') {
-      params = `?receiverEmail=${this.state.searchValue}`;
-    } else if (this.state.valueSearch == 'phone') {
-      params = `?receiverPhone=${this.state.searchValue}`;
-    } else if (this.state.valueSearch == 'ssn') {
-      params = `?userId=${this.state.searchValue}`;
-    } else if (this.state.valueSearch == 'type') {
-      if (this.state.valueTransaction == 'credit_card') {
-        params = `?type=credit`;
-      } else if (this.state.valueTransaction == 'debit_card') {
-        params = `?type=debit`;
-      } else {
-        params = `?type=upi`;
-      }
-    }
-    axios
-      .post(
-        `https://harshal-trasactions-project.herokuapp.com/user/${this.props.id}/transactions${params}`,
-        this.state.valueSearch == 'time'
-          ? {fromDate: this.state.from_date, toDate: this.state.to_date}
-          : {},
-        {
-          headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-          },
-        },
-      )
-      .then(response => {
-        this.setState({searchLoader: false, searchData: response.data});
-        console.log('response request', response.data);
-        if (typeof response.data == 'string') {
-          ToastAndroid.show(response.data, ToastAndroid.SHORT);
-        } else {
-          ToastAndroid.show('Fetched data', ToastAndroid.SHORT);
-        }
-      })
-      .catch(e => {
-        if (typeof e.response.data == 'string') {
-          ToastAndroid.show(e.response.data, ToastAndroid.SHORT);
-        } else {
-          ToastAndroid.show(e.response.data.error, ToastAndroid.SHORT);
-        }
-        this.setState({searchLoader: false});
-      });
-  };
-  getServiceIcon = id => {
-    switch (id) {
-      case 1:
-        return money;
-      case 2:
-        return statement;
-      case 3:
-        return history;
-      case 4:
-        return amount;
-      case 5:
-        return average;
-      case 6:
-        return users;
-      default:
-        return;
-    }
-  };
-  navigateToScreen = id => {
-    switch (id) {
-      case 1:
-        return money;
-      case 2:
-        return (
-          this.props.navigation &&
-          this.props.navigation.navigate('monthly_statement')
-        );
-      case 3:
-        return (
-          this.props.navigation &&
-          this.props.navigation.navigate('transaction_history')
-        );
-      case 4:
-        return amount;
-      case 5:
-        return average;
-      case 6:
-        return (
-          this.props.navigation && this.props.navigation.navigate('best_users')
-        );
-      default:
-        return;
-    }
-  };
-  renderSendModal=()=>{
+
+  renderSendModal = () => {
     return (
       <Modal
         animationInTiming={800}
@@ -448,10 +433,10 @@ class SendRequest extends React.Component {
         isVisible={this.state.sendModal}
         style={{
           width: '100%',
-          justifyContent: 'flex-end',
-          margin: 0,
+
           flexDirection: 'column',
-          zIndex: 1,
+          justifyContent: 'center',
+          margin: 0,
         }}
         onBackButtonPress={() => {
           this.setState({sendModal: false});
@@ -470,7 +455,9 @@ class SendRequest extends React.Component {
             borderTopLeftRadius: 8,
             borderTopRightRadius: 8,
           }}>
-          <Text style={{color:'#2F2C3D',fontSize:16,fontWeight:'600'}}>Paying {this.state.email_phone}</Text>
+          <Text style={{color: '#2F2C3D', fontSize: 16, fontWeight: '600'}}>
+            Paying {this.state.email_phone}
+          </Text>
           <View
             style={{
               flexDirection: 'row',
@@ -480,31 +467,73 @@ class SendRequest extends React.Component {
               borderWidth: 0.5,
               borderColor: '#0d0d0d',
               marginBottom: 20,
-              borderRadius:8
+              borderRadius: 8,
+              marginVertical: 10,
+              alignSelf: 'center',
             }}>
             <Icon2
-              name="comment"
-              size={17}
-              color="#2F2C3D"
-              style={{marginRight: 10}}
+              name="rupee"
+              color={'#2F2C3D'}
+              size={16}
+              style={{marginLeft: 8}}
             />
             <TextInput
-              placeholder="Comment"
+              placeholder="Enter amount"
               style={{
                 flex: 0.98,
                 justifyContent: 'center',
                 alignItems: 'center',
                 color: '#2F2C3D',
+                paddingLeft: 4,
+              }}
+              onChangeText={text => this.handleOnchange('amount', text)}
+              placeholderTextColor="#2F2C3D"
+              value={this.state.amount}
+            />
+          </View>
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              width: '90%',
+              alignItems: 'center',
+              borderWidth: 0.5,
+              borderColor: '#0d0d0d',
+              marginBottom: 20,
+              borderRadius: 8,
+              marginBottom: 10,
+              alignSelf: 'center',
+            }}>
+            <TextInput
+              placeholder="Add Comment"
+              style={{
+                flex: 0.98,
+                justifyContent: 'center',
+                alignItems: 'center',
+                color: '#2F2C3D',
+                paddingLeft: 20,
               }}
               onChangeText={text => this.handleOnchange('comment', text)}
               placeholderTextColor="#2F2C3D"
               value={this.state.comment}
             />
           </View>
+          <View style={[styles.buttonContainer, {alignSelf: 'center'}]}>
+            <TouchableOpacity
+              onPress={() => {
+                this.sendMoney();
+              }}>
+              {this.state.sendMoneyLoader ? (
+                <ActivityIndicator color={'silver'} size="small" />
+              ) : (
+                <Text style={{color: '#fff', textAlign: 'center'}}>Pay</Text>
+              )}
+            </TouchableOpacity>
+          </View>
         </View>
       </Modal>
     );
-  }
+  };
   render() {
     const {open, value, items} = this.state;
     const {openSearch, valueSearch, itemsSearch} = this.state;
@@ -513,6 +542,7 @@ class SendRequest extends React.Component {
     return (
       <View style={styles.container}>
         {this.renderSendModal()}
+        {this.renderRequestModal()}
         <View
           style={{
             flexDirection: 'row',
@@ -539,14 +569,14 @@ class SendRequest extends React.Component {
             flexDirection: 'row',
             justifyContent: 'space-between',
             alignItems: 'center',
-            width: '90%',
-            borderBottomWidth: 1,
-            borderBottomColor: '#fff',
+            width: '94%',
             marginTop: 20,
+            backgroundColor: '#fff',
+            borderRadius: 8,
           }}>
           <Image
             source={contact}
-            style={{width: 17, height: 17}}
+            style={{width: 17, height: 17, marginLeft: 8}}
             resizeMode="contain"
           />
           <TextInput
@@ -556,12 +586,12 @@ class SendRequest extends React.Component {
                 flex: 0.98,
                 justifyContent: 'center',
                 alignItems: 'center',
-                color: '#fff',
+                color: '#343244',
               },
             ]}
             onChangeText={text => this.handleOnchange('email_phone', text)}
             value={this.state.email_phone}
-            placeholderTextColor="#fff"
+            placeholderTextColor="#343244"
           />
         </View>
 
@@ -584,26 +614,26 @@ class SendRequest extends React.Component {
             scrollViewProps={{
               nestedScrollEnabled: true,
             }}
-            style={{
-              backgroundColor: '#343244',
-              borderBottomColor: '#fff',
-              borderWidth: 0,
-              borderBottomWidth: 1,
-            }}
-            placeholderStyle={{
-              color: '#fff',
-            }}
-            textStyle={{
-              color: '#fff',
-            }}
-            listItemLabelStyle={{
-              color: '#000',
-            }}
-            arrowIconStyle={{
-              width: 20,
-              height: 20,
-              tintColor: '#fff',
-            }}
+            // style={{
+            //   backgroundColor: '#343244',
+            //   borderBottomColor: '#fff',
+            //   borderWidth: 0,
+            //   borderBottomWidth: 1,
+            // }}
+            // placeholderStyle={{
+            //   color: '#fff',
+            // }}
+            // textStyle={{
+            //   color: '#fff',
+            // }}
+            // listItemLabelStyle={{
+            //   color: '#000',
+            // }}
+            // arrowIconStyle={{
+            //   width: 20,
+            //   height: 20,
+            //   tintColor: '#fff',
+            // }}
             placeholder="Select Transaction Mode"
           />
         </View>

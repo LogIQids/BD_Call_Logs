@@ -185,7 +185,7 @@ class HomeScreen extends React.Component {
         },
       )
       .then(response => {
-        this.setState({acceptRejectLoader: false, requestsData: null});
+        this.setState({acceptRejectLoader: false, showRequest: false});
         console.log('response', response.data);
         ToastAndroid.show(response.data, ToastAndroid.SHORT);
       })
@@ -580,7 +580,7 @@ class HomeScreen extends React.Component {
         // if (response.data && response.data.length == 0) {
         //   ToastAndroid.show('No requests found', ToastAndroid.SHORT);
         // } else {
-        //   this.setState({requestsData: response.data});
+          this.setState({requestsData: response.data});
         //   ToastAndroid.show('Requests Fetched', ToastAndroid.SHORT);
         // }
       })
@@ -712,7 +712,7 @@ class HomeScreen extends React.Component {
     const {open, value, items} = this.state;
     const {openSearch, valueSearch, itemsSearch} = this.state;
     const {transactionOpen, valueTransaction, transactionItems} = this.state;
-    console.log('statementData', this.props );
+    console.log('statementData', this.state.requestsData);
     return (
       <View style={styles.container}>
         {this.renderModal()}
