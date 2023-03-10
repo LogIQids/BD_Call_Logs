@@ -2,10 +2,10 @@ import React from 'react';
 import {NavigationContainer} from '@react-navigation/native';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import HomeNav from './HomeNav'
-import Account from '../Screens/Account';
-import Statement from '../Screens/Statement';
+import Create from '../Screens/Create';
 import Icon from 'react-native-vector-icons/Entypo';
-import Icon2 from 'react-native-vector-icons/MaterialCommunityIcons';
+import Icon2 from 'react-native-vector-icons/MaterialIcons';
+import Home from '../Screens/Home';
 
 const Tab = createBottomTabNavigator();
 
@@ -13,8 +13,8 @@ export default function TabNavigator() {
   return (
     <Tab.Navigator mode="modal">
       <Tab.Screen
-        name="Home"
-        component={HomeNav}
+        name="HomeNav"
+        component={Home}
         options={{
           headerShown: false,
           tabBarLabel: 'Home',
@@ -26,15 +26,15 @@ export default function TabNavigator() {
         }}
       />
       <Tab.Screen
-        name="Profile"
-        component={Account}
+        name="Create"
+        component={Create}
         options={{
           headerShown: false,
-          tabBarLabel: 'Profile',
+          tabBarLabel: 'Create',
           activeTintColor: '#2a52be',
           inactiveTintColor: '#b5b5b5',
           tabBarIcon: ({focused, tintColor}) => {
-            return <Icon2 name="account" style={{padding: 0}} size={25} color={focused?'#2a52be':'#b5b5b5'}/>;
+            return <Icon2 name="create" style={{padding: 0}} size={25} color={focused?'#2a52be':'#b5b5b5'}/>;
           },
         }}
       />

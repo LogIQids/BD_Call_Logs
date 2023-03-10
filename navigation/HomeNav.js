@@ -1,53 +1,36 @@
 import React from 'react';
-import {NavigationContainer} from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
 import Home from '../Screens/Home';
-import MonthlyStatement from '../Screens/MonthlyStatement';
-import BestUsers from '../Screens/BestUsers';
-import TransactionHistory from '../Screens/TransactionHistory';
-import SendRequest from '../Screens/SendRequest';
-import TransactionAmount from '../Screens/TransactionAmount';
-import TransactionAmountMax from '../Screens/TransactionAmountMax';
+import Comment from '../Screens/Comment';
+import Users from '../Screens/Messenger';
+import Chat from '../Screens/Chat';
+import Bottomstack from './bottomstack';
 
 const Stack = createStackNavigator();
 
-export default function StackNavigator() {
+export default function StackNavigator(navigation) {
+
   return (
     <Stack.Navigator mode="modal">
       <Stack.Screen
         name="Home"
-        component={Home}
+        component={Bottomstack}
         options={{headerShown: false}}
+      /> 
+      <Stack.Screen
+        name="Comment"
+        component={Comment}
+        options={{headerShown: false,tabBarStyle:{display:'none'}}}
       />
       <Stack.Screen
-        name="monthly_statement"
-        component={MonthlyStatement}
-        options={{headerShown: false}}
+        name="Users"
+        component={Users}
+        options={{headerShown: false,tabBarStyle:{display:'none'}}}
       />
       <Stack.Screen
-        name="best_users"
-        component={BestUsers}
-        options={{headerShown: false}}
-      />
-       <Stack.Screen
-        name="transaction_history"
-        component={TransactionHistory}
-        options={{headerShown: false}}
-      />
-        <Stack.Screen
-        name="send_request"
-        component={SendRequest}
-        options={{headerShown: false}}
-      />
-       <Stack.Screen
-        name="transaction_amount"
-        component={TransactionAmount}
-        options={{headerShown: false}}
-      />
-       <Stack.Screen
-        name="transaction_amount_max"
-        component={TransactionAmountMax}
-        options={{headerShown: false}}
+        name="Chat"
+        component={Chat}
+        options={{headerShown: false,tabBarStyle:{display:'none'}}}
       />
     </Stack.Navigator>
   );
