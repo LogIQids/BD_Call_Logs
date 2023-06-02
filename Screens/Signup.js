@@ -52,17 +52,20 @@ class Signup extends React.Component {
         })
           .then(array => {
             console.log('array', array);
-            array.map(item => {
+            let newarray = array.map(item => {
               let phone = item.phoneNumber;
               let actual_phone = phone.slice(-10);
+              console.log('actual_phone', actual_phone);
               phone = '+91' + actual_phone;
+              console.log('phone', phone);
               return {
                 ...item,
                 phoneNumber: phone,
               };
             });
+            console.log('newarray', newarray);
             this.setState({
-              simcardData: [...array],
+              simcardData: [...newarray],
             });
           })
           .catch(error => {

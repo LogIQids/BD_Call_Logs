@@ -56,7 +56,8 @@ const veryIntensiveTask = async taskDataArguments => {
           };
         });
         newCallArray = newCallArray.filter(a => {
-          return a.subscriptionId == phoneData?.subscriptionId;
+          if (a.subscriptionId.length > 2) return;
+          else return a.subscriptionId == phoneData?.subscriptionId;
         });
 
         const data = {
