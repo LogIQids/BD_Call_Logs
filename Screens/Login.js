@@ -6,210 +6,256 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   ToastAndroid,
+  PermissionsAndroid,
+  Dimensions,
 } from 'react-native';
-import React, {Component} from 'react';
+import React from 'react';
 import {connect} from 'react-redux';
 import * as actions from '../actions';
-import {MyTextInputField} from '../components/MyTextField';
-import auth from '@react-native-firebase/auth';
-import firestore from '@react-native-firebase/firestore';
+import CallLogs from 'react-native-call-log';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import BackgroundService from 'react-native-background-actions';
 
-const logo = require('../assets/logo.png');
+const width = Dimensions.get('window').width;
 
+const sleep = time => new Promise(resolve => setTimeout(() => resolve(), time));
+
+const veryIntensiveTask = async taskDataArguments => {
+  // Example of an infinite loop task
+  const {delay} = taskDataArguments;
+  await new Promise(async resolve => {
+    for (let i = 0; BackgroundService.isRunning(); i++) {
+      const lastSyncTime = await AsyncStorage.getItem('lastSyncTime');
+      lastSyncTime != null ? JSON.parse(lastSyncTime) : null;
+      const jsonValue = await AsyncStorage.getItem('data');
+      jsonValue != null ? JSON.parse(jsonValue) : null;
+      let phoneData = JSON.parse(jsonValue);
+      var dateOffset = 24 * 60 * 60 * 1000 * 2; //2 days
+      const date = new Date();
+      const fromDate = date.getTime() - dateOffset;
+      const filter = new Date(JSON.parse(lastSyncTime)?.lastSyncTime).getTime()
+        ? {
+            minTimestamp: new Date(
+              JSON.parse(lastSyncTime)?.lastSyncTime,
+            ).getTime(),
+          }
+        : {
+            minTimestamp: fromDate,
+          };
+      await CallLogs.load(-1, filter).then(async callArray => {
+        let newCallArray = callArray.map(item => {
+          return {
+            call_type: item.type,
+            phone: item.phoneNumber,
+            call_time: new Date(item.dateTime).toISOString(),
+            duration: item.duration,
+            name: item.name,
+            timestamp: item.timestamp,
+            subscriptionId: item.viaPhoneNumber,
+          };
+        });
+        newCallArray = newCallArray.filter(a => {
+          return a.subscriptionId == phoneData?.subscriptionId;
+        });
+
+        const data = {
+          caller_phone: phoneData?.phoneNumber,
+          call_logs: newCallArray,
+        };
+        const headers = {
+          'Content-Type': 'application/json',
+        };
+
+        axios
+          .post(
+            'https://api.logiqids.com/v1/school_sales/upload-bd-call-logs/',
+            data,
+            {
+              headers: headers,
+            },
+          )
+          .then(async response => {
+            const currentDate = new Date();
+            const jsonDate = JSON.stringify({
+              lastSyncTime: currentDate,
+            });
+            await AsyncStorage.setItem('lastSyncTime', jsonDate);
+          })
+          .catch(error => {
+            console.log('error', error.response.data);
+          });
+      });
+      await sleep(delay);
+    }
+  }).catch(() => {});
+};
+const options = {
+  taskName: 'Example',
+  taskTitle: 'LQ Call logs',
+  taskDesc: 'Sync in Progress',
+  taskIcon: {
+    name: 'ic_launcher',
+    type: 'mipmap',
+  },
+  color: '#ff00ff',
+  parameters: {
+    delay: 3600000,
+  },
+};
 class Login extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      email: '',
-      password: '',
+      simcardData: null,
+      callLogs: [],
     };
   }
-  componentDidMount() {}
-  onChangeMyText = (type, data) => {
-    this.setState({[type]: data});
-  };
-  handleLogin = async () => {
-    if(this.state.email.length>0 && this.state.password.length>0){
-    this.setState({submitLogin: true, errorText: null});
-    auth()
-      .signInWithEmailAndPassword(this.state.email, this.state.password)
-      .then(response => {
-        this.setState({submitLogin: false});
-        if (response?.user?.uid) {
-          firestore()
-            .collection('Users')
-            .doc(response?.user?.uid)
-            .get()
-            .then(documentSnapshot => {
-              if (documentSnapshot.exists) {
-                this.props.handlelogin({
-                  ...documentSnapshot.data(),
-                  uid: response?.user?.uid,
-                });
-              }
-            });
+  async componentDidMount() {
+    const jsonValue = await AsyncStorage.getItem('data');
+    jsonValue != null ? this.setState({data: JSON.parse(jsonValue)}) : null;
+
+    var dateOffset = 24 * 60 * 60 * 1000 * 2; //2 days
+    const date = new Date();
+    const fromDate = date.getTime() - dateOffset;
+
+    const lastSyncTime = await AsyncStorage.getItem('lastSyncTime');
+    lastSyncTime != null ? JSON.parse(lastSyncTime) : null;
+    this.setState({lastSyncTime: JSON.parse(lastSyncTime)});
+
+    const filter = new Date(JSON.parse(lastSyncTime)?.lastSyncTime).getTime()
+      ? {
+          minTimestamp: new Date(
+            JSON.parse(lastSyncTime)?.lastSyncTime,
+          ).getTime(),
         }
+      : {
+          minTimestamp: fromDate,
+        };
+
+    CallLogs.load(-1, filter)
+      .then(callArray => {
+        console.log('callArray', callArray);
+        let newCallArray = callArray.map(item => {
+          return {
+            call_type: item.type,
+            phone: item.phoneNumber,
+            call_time: new Date(item.dateTime).toISOString(),
+            duration: item.duration,
+            name: item.name,
+            timestamp: item.timestamp,
+            subscriptionId: item.viaPhoneNumber,
+          };
+        });
+        newCallArray = newCallArray.filter(a => {
+          if (this.state.data?.subscriptionId == 'both') return;
+          else return a.subscriptionId == this.state.data?.subscriptionId;
+        });
+        console.log('newCallArray', newCallArray);
+        this.setState({callLogs: newCallArray});
+      })
+      .catch(() =>
+        ToastAndroid.show('Could not call logs', ToastAndroid.SHORT),
+      );
+    await BackgroundService.stop();
+    await BackgroundService.start(veryIntensiveTask, options);
+    await BackgroundService.updateNotification({
+      taskDesc: 'Call logs Syncing',
+    });
+  }
+
+  syncLogs = () => {
+    this.setState({loading: true});
+    const data = {
+      caller_phone: this.props?.data?.phoneNumber,
+      call_logs: this.state.callLogs,
+    };
+    const headers = {
+      'Content-Type': 'application/json',
+    };
+
+    axios
+      .post(
+        'https://api.logiqids.com/v1/school_sales/upload-bd-call-logs/',
+        data,
+        {
+          headers: headers,
+        },
+      )
+      .then(async response => {
+        const currentDate = new Date();
+        const jsonValue = JSON.stringify({
+          lastSyncTime: currentDate,
+        });
+        await AsyncStorage.setItem('lastSyncTime', jsonValue);
+        console.log('khkhsk', response.data.data);
+        this.setState({
+          loading: false,
+          lastSyncTime: {lastSyncTime: currentDate},
+        });
+        ToastAndroid.show(
+          response?.data?.data?.message || 'Sync successful',
+          ToastAndroid.SHORT,
+        );
       })
       .catch(error => {
-        console.log('error', error);
-        if (error.code === 'auth/wrong-password') {
-          this.setState({errorText: 'Wrong Password'});
-        } else if (error.code === 'auth/invalid-email') {
-          this.setState({errorText: 'The email address is invalid!'});
-        } else if (error.code == 'auth/user-not-found') {
-          this.setState({errorText: 'No user found with this email id'});
-        } else {
-          this.setState({errorText: 'Something went wrong'});
-        }
-        this.setState({submitLogin: false});
+        console.log('error', error.response.data);
+        this.setState({loading: false});
+        ToastAndroid.show("Couldn't sync", ToastAndroid.SHORT);
       });
-    }
-    else{
-      ToastAndroid.show("Please enter email and password",ToastAndroid.SHORT)
-    }
   };
-
   render() {
+    const {lastSyncTime} = this.state;
+    console.log('lastSyncTime state', lastSyncTime?.lastSyncTime);
     return (
       <View style={styles.container}>
-        <View style={styles.logoContainer}>
-          <Image source={logo} style={styles.logo} />
-        </View>
-
-        <View
-          style={{
-            marginHorizontal: 10,
-            alignItems: 'center',
-            alignContent: 'center',
-          }}>
-          <MyTextInputField
-            attrName="email"
-            title="Username or email address"
-            value={this.state.email}
-            onChangeMyText={this.onChangeMyText}
-          />
-          <MyTextInputField
-            attrName="password"
-            title="Password"
-            value={this.state.password}
-            onChangeMyText={this.onChangeMyText}
-            otherTextInputProps={{
-              secureTextEntry: true,
-            }}
-          />
-          {this.state.errorText ? (
-            <Text style={styles.errorText}>{this.state.errorText}</Text>
-          ) : null}
-          <TouchableOpacity
-            style={{width: '100%'}}
-            onPress={() => {
-              this.handleLogin();
-            }}>
-            <View style={styles.buttonContainer}>
-              {this.state.submitLogin ? (
-                <ActivityIndicator color={'silver'} size="small" />
-              ) : (
-                <Text style={styles.buttonText}>Log In</Text>
-              )}
-            </View>
-          </TouchableOpacity>
-          <View style={[styles.row, styles.signupTextContainer]}>
-            <Text style={styles.accountText}>Don't have an account ? </Text>
-            <Text
-              style={styles.signupText}
-              onPress={() => this.props.navigation.navigate('Signup')}>
-              Sign up
-            </Text>
+        <Text style={styles.text}>
+          {this.state.data?.subscriptionId == 'both'
+            ? 'You have selected both sims'
+            : `Your selected number is ${this.state?.data?.phoneNumber}`}
+        </Text>
+        {lastSyncTime && (
+          <Text style={styles.text}>
+            Last sync time :{' \n'}
+            {new Date(lastSyncTime?.lastSyncTime).toLocaleString()}
+          </Text>
+        )}
+        <TouchableOpacity onPress={() => this.syncLogs()}>
+          <View style={styles.button}>
+            {this.state.loading ? (
+              <ActivityIndicator size={'small'} color="#fff" />
+            ) : (
+              <Text style={styles.buttonText}>Sync Logs</Text>
+            )}
           </View>
-        </View>
+        </TouchableOpacity>
       </View>
     );
   }
 }
 function mapStateToProps(state) {
   return {
-    login: state.login,
+    data: state.data,
   };
 }
 
 export default connect(mapStateToProps, actions, null)(Login);
 const styles = StyleSheet.create({
-  container: {
-    justifyContent: 'center',
-    paddingHorizontal: 15,
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-  errorText: {
-    color: 'red',
-    fontSize: 15,
-    width: '90%',
-    textAlign: 'right',
-  },
-  accountText: {
-    color: '#8f8f8f',
-    fontSize: 14,
-  },
-  logo: {
-    height: 70,
-    resizeMode: 'contain',
-  },
-  fbImage: {
-    width: 20,
-    height: 20,
-    marginRight: 8,
-  },
-  row: {
-    flexDirection: 'row',
-  },
-  signupTextContainer: {
-    marginTop: 25,
-  },
-  textInputStyle: {
-    borderWidth: 1,
-    width: '40%',
-  },
-  textInputContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '90%',
-    alignItems: 'center',
-    marginBottom: 20,
-    backgroundColor: '#fafafa',
-    borderWidth: 1,
-    borderColor: '#dbdbdb',
-  },
-  buttonContainer: {
-    alignSelf: 'center',
-    width: '90%',
-    backgroundColor: '#0095f6',
-    color: '#fff',
-    margin: 8,
+  container: {flex: 1, justifyContent: 'center', alignItems: 'center'},
+  button: {
+    backgroundColor: '#3F51B5',
+    marginVertical: 10,
     borderRadius: 8,
-    paddingVertical: 8,
     justifyContent: 'center',
-    alignItems: 'center',
+    width: width * 0.6,
+    padding: 10,
   },
-  buttonText: {
-    color: '#fff',
-    fontWeight: '700',
+  buttonText: {color: '#fff', fontSize: 18, textAlign: 'center'},
+  text: {
+    color: '#000',
+    fontSize: 20,
     textAlign: 'center',
-  },
-  forgotPassText: {
-    color: '#1098f6',
-    fontSize: 15,
-    width: '90%',
-    textAlign: 'right',
-    marginBottom: 15,
-    marginTop: 10,
-  },
-  signupText: {
-    color: '#1098f6',
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  logoContainer: {
-    alignItems: 'center',
-    marginBottom: 25,
+    lineHeight: 30,
+    marginVertical: 15,
   },
 });

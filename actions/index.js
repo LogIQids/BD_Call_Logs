@@ -1,8 +1,8 @@
-import {SAVE_LOGIN_TOKEN,RESET_LOGIN_TOKEN} from './type';
+import {SAVE_PHONE_NUMBER, RESET_PHONE_NUMBER} from './type';
 
-export function handlelogin(userData) {
-  return {type: SAVE_LOGIN_TOKEN, payload: userData};
+export function saveData(userData) {
+  return {type: SAVE_PHONE_NUMBER, payload: userData};
 }
-export function resetLogin() {
-  return {type: RESET_LOGIN_TOKEN};
+export function resetData() {
+  return {type: RESET_PHONE_NUMBER};
 }

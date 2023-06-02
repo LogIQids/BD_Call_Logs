@@ -6,251 +6,168 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   ToastAndroid,
+  Dimensions,
+  PermissionsAndroid,
 } from 'react-native';
-import React, {Component} from 'react';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import Icon2 from 'react-native-vector-icons/AntDesign';
+import React from 'react';
 import {connect} from 'react-redux';
 import * as actions from '../actions';
-import {MyTextInputField} from '../components/MyTextField';
-import auth from '@react-native-firebase/auth';
-import firestore from '@react-native-firebase/firestore';
-import UtilityFunctions from '../Utils/utilityfunctions';
+import SimCardsManagerModule from 'react-native-sim-cards-manager';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const logo = require('../assets/logo.png');
-const user = require('../assets/user.png');
-
+const tick = require('../assets/tickIconGreen.png');
+const width = Dimensions.get('window').width;
 class Signup extends React.Component {
   constructor(props) {
     super(props);
-    this.utils = new UtilityFunctions();
     this.state = {
-      email: '',
-      password: '',
-      username: '',
-      image: '',
+      simcardData: null,
     };
   }
-  componentDidMount() {}
-  onChangeMyText = (type, data) => {
-    this.setState({[type]: data});
-  };
-  handleSignup = async () => {
-    if (
-      this.state.email.length > 0 &&
-      this.state.password.length > 0 &&
-      this.state.username.length > 0
-    ) {
-      this.setState({submitLogin: true, errorText: null});
-
-      auth()
-        .createUserWithEmailAndPassword(this.state.email, this.state.password)
-        .then(response => {
-          this.setState({submitLogin: false});
-          if (response?.user) {
-            firestore()
-              .collection('Users')
-              .doc(response?.user?.uid)
-              .set({
-                username: this.state.username,
-                email: this.state.email,
-                profileImg: this.state.image,
-              })
-              .then(() => {
-                console.log('User added!');
-                this.props.handlelogin({
-                  uid: response?.user?.uid,
-                  username: this.state.username,
-                  email: this.state.email,
-                  profileImg: this.state.image,
-                });
-              });
-          }
+  async componentDidMount() {
+    await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.READ_SMS, {
+      title: 'Call Log Example',
+      message: 'Access your call logs',
+      buttonNeutral: 'Ask Me Later',
+      buttonNegative: 'Cancel',
+      buttonPositive: 'OK',
+    });
+    await PermissionsAndroid.request(
+      PermissionsAndroid.PERMISSIONS.READ_CALL_LOG,
+      {
+        title: 'Call Log Example',
+        message: 'Access your call logs',
+        buttonNeutral: 'Ask Me Later',
+        buttonNegative: 'Cancel',
+        buttonPositive: 'OK',
+      },
+    );
+    !this.props.data?.phoneNumber
+      ? await SimCardsManagerModule.getSimCards({
+          title: 'App Permission',
+          message: 'Custom message',
+          buttonNeutral: 'Not now',
+          buttonNegative: 'Not OK',
+          buttonPositive: 'OK',
         })
-        .catch(error => {
-          if (error.code === 'auth/email-already-in-use') {
-            console.log('That email address is already in use!');
-            this.setState({errorText: 'Email already in use'});
-          }
-          if (error.code === 'auth/invalid-email') {
-            console.log('The email address is invalid!');
-            this.setState({errorText: 'Email address is invalid!'});
-          }
-          this.setState({submitLogin: false});
-        });
+          .then(array => {
+            console.log('array', array);
+            array.map(item => {
+              let phone = item.phoneNumber;
+              let actual_phone = phone.slice(-10);
+              phone = '+91' + actual_phone;
+              return {
+                ...item,
+                phoneNumber: phone,
+              };
+            });
+            this.setState({
+              simcardData: [...array],
+            });
+          })
+          .catch(error => {
+            ToastAndroid.show('Could not fetch sim Data', ToastAndroid.SHORT);
+          })
+      : null;
+  }
+  saveData = async () => {
+    const {phoneNumber, subscriptionId} = this.state;
+    if (phoneNumber) {
+      const jsonValue = JSON.stringify({
+        phoneNumber: phoneNumber,
+        subscriptionId: subscriptionId,
+      });
+      this.props.saveData({
+        phoneNumber: phoneNumber,
+        subscriptionId: subscriptionId,
+      });
+      await AsyncStorage.setItem('data', jsonValue);
+      console.log('data', this.props.data);
+      // this.props.navigation.navigate('Login');
     } else {
-      ToastAndroid.show(
-        'Please enter email,username and password',
-        ToastAndroid.SHORT,
-      );
+      ToastAndroid.show('Select atleast one option', ToastAndroid.SHORT);
     }
   };
-  pickImage = async () => {
-    const url = await this.utils.uploadImage();
-    this.setState({image: `${url}.png`});
-  };
   render() {
+    const {simcardData, phoneNumber} = this.state;
+    console.log('simcardData', simcardData);
     return (
       <View style={styles.container}>
-        <View style={styles.logoContainer}>
-          <Image source={logo} style={styles.logo} />
-        </View>
-        <TouchableOpacity onPress={() => this.pickImage()}>
-          {this.state.image.length > 0 ? (
-            <Image
-              source={{uri: this.state.image}}
-              style={styles.profileImg}
-              resizeMode={'cover'}
-            />
-          ) : (
-            <Image
-              source={user}
-              style={styles.profileImg}
-              resizeMode="contain"
-            />
-          )}
-        </TouchableOpacity>
-
-        <View
-          style={{
-            marginHorizontal: 10,
-            alignItems: 'center',
-            alignContent: 'center',
-          }}>
-          <MyTextInputField
-            attrName="username"
-            title="Enter username"
-            value={this.state.username}
-            onChangeMyText={this.onChangeMyText}
-          />
-          <MyTextInputField
-            attrName="email"
-            title="Enter email address"
-            value={this.state.email}
-            onChangeMyText={this.onChangeMyText}
-          />
-          <MyTextInputField
-            attrName="password"
-            title="Password"
-            value={this.state.password}
-            onChangeMyText={this.onChangeMyText}
-            otherTextInputProps={{
-              secureTextEntry: true,
-            }}
-          />
-          {this.state.errorText ? (
-            <Text style={styles.errorText}>{this.state.errorText}</Text>
-          ) : null}
+        <Text style={styles.text}>Select Phone Number </Text>
+        {simcardData?.map(item => (
           <TouchableOpacity
-            style={{width: '100%'}}
             onPress={() => {
-              this.handleSignup();
+              this.setState({
+                phoneNumber: item.phoneNumber,
+                subscriptionId: item.subscriptionId,
+              });
             }}>
-            <View style={styles.buttonContainer}>
-              {this.state.submitLogin ? (
-                <ActivityIndicator color={'silver'} size="small" />
-              ) : (
-                <Text style={styles.buttonText}>Sign up</Text>
+            <View
+              style={[
+                styles.itemList,
+                phoneNumber === item.phoneNumber && styles.greenBorder,
+              ]}>
+              <Text style={styles.itemText}>{item.phoneNumber}</Text>
+              {phoneNumber === item.phoneNumber && (
+                <Image source={tick} style={styles.tick} resizeMode="contain" />
               )}
             </View>
           </TouchableOpacity>
-          <View style={[styles.row, styles.signupTextContainer]}>
-            <Text style={styles.accountText}>Have an account ? </Text>
-            <Text
-              style={styles.signupText}
-              onPress={() => this.props.navigation.navigate('Login')}>
-              Log In
-            </Text>
+        ))}
+        <TouchableOpacity onPress={() => this.saveData()}>
+          <View style={styles.button}>
+            {this.state.loading ? (
+              <ActivityIndicator size={'small'} color="#fff" />
+            ) : (
+              <Text style={styles.buttonText}>Proceed</Text>
+            )}
           </View>
-        </View>
+        </TouchableOpacity>
       </View>
     );
   }
 }
 function mapStateToProps(state) {
   return {
-    login: state.login,
+    data: state.data,
   };
 }
 
 export default connect(mapStateToProps, actions, null)(Signup);
 const styles = StyleSheet.create({
-  container: {
+  container: {flex: 1, justifyContent: 'center', alignItems: 'center'},
+  button: {
+    backgroundColor: '#3F51B5',
+    marginVertical: 10,
+    borderRadius: 8,
     justifyContent: 'center',
-    paddingHorizontal: 15,
-    flex: 1,
-    backgroundColor: '#FFFFFF',
+    width: width * 0.6,
+    padding: 10,
   },
-  profileImg: {
-    width: 100,
-    height: 100,
-    borderRadius: 100 / 2,
-    overflow: 'hidden',
-    alignSelf: 'center',
+  buttonText: {color: '#fff', fontSize: 18, textAlign: 'center'},
+  text: {
+    color: '#000',
+    fontSize: 20,
   },
-  accountText: {
-    color: '#8f8f8f',
-    fontSize: 14,
+  itemList: {
+    padding: 8,
+    borderWidth: 1,
+    borderRadius: 8,
+    marginVertical: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: width * 0.6,
+    justifyContent: 'space-between',
   },
-  logo: {
-    height: 70,
-    resizeMode: 'contain',
+  itemText: {
+    color: '#000',
+    fontSize: 16,
   },
-  fbImage: {
+  tick: {
     width: 20,
     height: 20,
-    marginRight: 8,
   },
-  row: {
-    flexDirection: 'row',
-  },
-  signupTextContainer: {
-    marginTop: 25,
-  },
-
-  textInputStyle: {
-    borderWidth: 1,
-    width: '40%',
-  },
-  textInputContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '90%',
-    alignItems: 'center',
-    marginBottom: 20,
-    backgroundColor: '#fafafa',
-    borderWidth: 1,
-    borderColor: '#dbdbdb',
-  },
-  buttonContainer: {
-    alignSelf: 'center',
-    width: '90%',
-    backgroundColor: '#0095f6',
-    color: '#fff',
-    margin: 8,
-    borderRadius: 8,
-    paddingVertical: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  buttonText: {
-    color: '#fff',
-    fontWeight: '700',
-    textAlign: 'center',
-  },
-  errorText: {
-    color: 'red',
-    fontSize: 15,
-    width: '90%',
-    textAlign: 'right',
-  },
-  signupText: {
-    color: '#1098f6',
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  logoContainer: {
-    alignItems: 'center',
-    marginBottom: 25,
+  greenBorder: {
+    borderColor: '#1BB55C',
   },
 });
