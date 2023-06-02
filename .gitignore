@@ -32,7 +32,10 @@ local.properties
 
 # node.js
 #
-node_modules/
+node_modules/*
+!node_modules/react-native-call-log
+!node_modules/react-native-sim-cards-manager
+
 npm-debug.log
 yarn-error.log
 
